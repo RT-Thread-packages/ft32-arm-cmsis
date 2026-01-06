@@ -1,0 +1,39 @@
+import rtconfig
+from building import *
+
+# Import environment variables 
+Import('env')
+
+# get current directory
+cwd = GetCurrentDir()
+
+# The set of source files associated with this SConscript file.
+src = Split('''
+Source/system_ft32f0xx.c
+''')
+
+path = [
+    cwd + '/Include',
+    cwd,]
+
+# Map microcontroller units (MCUs) to their corresponding startup files
+mcu_startup_files = {
+    'FT32F072xB': 'startup_ft32f072xb.s',
+}
+
+# Check each defined MCU, match the platform and append the appropriate startup file
+for mcu, startup_file in mcu_startup_files.items():
+    if mcu in env.get('CPPDEFINES', []):
+        if rtconfig.PLATFORM in ['gcc']:
+            src += [os.path.join(cwd, 'FT', 'FT32F072xB', 'Source', 'GCC', startup_file)]
+        elif rtconfig.PLATFORM in ['armcc', 'armclang']:
+            src += [os.path.join(cwd, 'FT', 'FT32F072xB', 'Source', 'ARM', startup_file)]
+        elif rtconfig.PLATFORM in ['iccarm']:
+            src += [os.path.join(cwd, 'FT', 'FT32F072xB', 'Source', 'IAR', startup_file)]
+        break
+
+CPPDEFINES = ['USE_STDPERIPH_DRIVER']
+
+group = DefineGroup('Libraries', src, depend = ['SOC_SERIES_FT32F0'], CPPPATH = path, CPPDEFINES = CPPDEFINES)
+
+Return('group')
